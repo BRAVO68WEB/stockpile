@@ -377,6 +377,24 @@ const assignHandler = (command, connection) => {
         }
       }
 
+      else if (command[2] == "HMSET") {
+        const hash = command[1];
+        const fieldsAndValues = command.slice(2);
+        const hashExists = dataStore[currentDatabase].hasOwnProperty(hash);
+      
+        if (!hashExists) {
+          dataStore[currentDatabase][hash] = {};
+        }
+      
+        for (let i = 0; i < fieldsAndValues.length; i += 2) {
+          const field = fieldsAndValues[i];
+          const value = fieldsAndValues[i + 1];
+          dataStore[currentDatabase][hash][field] = value;
+        }
+      
+        connection.write("+OK\r\n");
+      }      
+
       else if (command[2] == "HINCRBY") {
         const key = command[4];
         const field = command[6];
