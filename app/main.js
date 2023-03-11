@@ -1,5 +1,6 @@
 const net = require("net");
-console.log("Logs from your program will appear here!");
+const fs = require("fs");
+const path = require("path");
 
 const MAX_DATABASES = 16;
 const DEFAULT_DATABASE = 0;
@@ -7,6 +8,14 @@ const DEFAULT_DATABASE = 0;
 let dataStore = new Array(MAX_DATABASES);
 for (let i = 0; i < MAX_DATABASES; i++) {
   dataStore[i] = new Map();
+}
+
+if(fs.existsSync(path.join(__dirname, "data.json"))){
+    dataStore = JSON.parse(fs.readFileSync(path.join(__dirname, "data.json")));
+    console.log("Data loaded from file");
+    dataStore = dataStore.map((item) => {
+        return new Map(Object.entries(item));
+      });
 }
 
 let currentDatabase = DEFAULT_DATABASE;
@@ -511,6 +520,10 @@ const assignHandler = (command, connection) => {
         }
       }
       
+      else if (command[2] == "DUMP"){
+        saveDataToFile(dataStore, "app/data.json");
+        connection.write(":1\r\n");
+      }
 }
 
 const stateChecker = (state) => {
@@ -547,3 +560,17 @@ const server = net.createServer((connection) => {
 });
 
 server.listen(6379, "127.0.0.1");
+
+function saveDataToFile(data, filename) {
+    let newData = []
+    for (let [key, value] of data.entries()) {
+        newData.push(Object.fromEntries(value))
+    }
+    fs.writeFileSync(filename, JSON.stringify(newData), err => {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log(`Data saved to ${filename}`);
+      }
+    });
+  }
