@@ -103,7 +103,7 @@ const assignHandler = (command, connection) => {
         let offset = command[6];
         let value = command[8];
         if(dataStore[currentDatabase].has(key)){
-            let oldValue = dataStore.get(key);
+            let oldValue = dataStore[currentDatabase].get(key);
             let newValue = oldValue.substring(0, offset) + value + oldValue.substring(offset + value.length);
             dataStore[currentDatabase].set(key, newValue);
             connection.write(":" + newValue.length + "\r\n");
@@ -138,12 +138,19 @@ const assignHandler = (command, connection) => {
     }
       
     else if (command[2] == "MGET") {
-        const keys = command.slice(4);
-        const values = keys.map(key => dataStore[currentDatabase].get(key) ?? "$-1\r\n");
-        const response = values.reduce((acc, value) => {
-            return `${acc}\r\n$${value.length}\r\n${value}`;
-        }, `*${values.length}`);
-        connection.write(response);
+        const keys = command.slice(1);
+        const values = keys.map(key => dataStore[currentDatabase].get(key) ?? null);
+    
+        if (values.includes(null)) {
+            connection.write("$-1\r\n");
+            console.log("Some keys not found");
+        } else {
+            const response = values.reduce((acc, value) => {
+                return `${acc}\r\n$${value.length}\r\n${value}`;
+            }, `*${values.length}`);
+            connection.write(response);
+            console.log(`MGET response: ${response}`);
+        }
     }
 
     // TODO: Monitor command is not working
@@ -185,6 +192,307 @@ const assignHandler = (command, connection) => {
         let randomKey = keys[Math.floor(Math.random() * keys.length)];
         connection.write("$" + randomKey.length + "\r\n" + randomKey + "\r\n");
     }
+
+    else if(command[2] == "INCR"){
+        let key = command[4];
+        if(dataStore[currentDatabase].has(key)){
+            let value = dataStore[currentDatabase].get(key);
+            let newValue = parseInt(value) + 1;
+            dataStore[currentDatabase].set(key, newValue.toString());
+            connection.write(":" + newValue + "\r\n");
+        }
+        else{
+            dataStore[currentDatabase].set(key, "1");
+            connection.write(":1\r\n");
+        }
+    }
+
+    else if(command[2] == "INCRBY"){
+        let key = command[4];
+        let increment = command[6];
+        if(dataStore[currentDatabase].has(key)){
+            let value = dataStore[currentDatabase].get(key);
+            let newValue = parseInt(value) + parseInt(increment);
+            dataStore[currentDatabase].set(key, newValue.toString());
+            connection.write(":" + newValue + "\r\n");
+        }
+        else{
+            dataStore[currentDatabase].set(key, increment);
+            connection.write(":" + increment + "\r\n");
+        }
+    }
+
+    else if(command[2] == "DECR"){
+        let key = command[4];
+        if(dataStore[currentDatabase].has(key)){
+            let value = dataStore[currentDatabase].get(key);
+            let newValue = parseInt(value) - 1;
+            dataStore[currentDatabase].set(key, newValue.toString());
+            connection.write(":" + newValue + "\r\n");
+        }
+        else{
+            dataStore[currentDatabase].set(key, "-1");
+            connection.write(":-1\r\n");
+        }
+    }
+
+    else if(command[2] == "DECRBY"){
+        let key = command[4];
+        let decrement = command[6];
+        if(dataStore[currentDatabase].has(key)){
+            let value = dataStore[currentDatabase].get(key);
+            let newValue = parseInt(value) - parseInt(decrement);
+            dataStore[currentDatabase].set(key, newValue.toString());
+            connection.write(":" + newValue + "\r\n");
+        }
+        else{
+            dataStore[currentDatabase].set(key, "-" + decrement);
+            connection.write(":-" + decrement + "\r\n");
+        }
+    }
+
+    else if (command[2] == "EXPIRE") {
+        const key = command[4];
+        const seconds = parseInt(command[6]);
+        if (dataStore[currentDatabase].has(key)) {
+          // Set the expiration time of the key
+          const timestamp = Math.floor(Date.now() / 1000) + seconds;
+          dataStore[currentDatabase].set(`${key}:expire`, timestamp);
+          connection.write(":1\r\n");
+      
+          // Schedule the key for deletion when the expiration time has elapsed
+          setTimeout(() => {
+            if (dataStore[currentDatabase].has(key)) {
+              dataStore[currentDatabase].delete(key);
+              dataStore[currentDatabase].delete(`${key}:expire`);
+            }
+          }, seconds * 1000);
+        }
+        else {
+          connection.write(":0\r\n");
+        }
+      }
+      
+      else if (command[2] == "TTL") {
+        const key = command[4];
+        if (dataStore[currentDatabase].has(key)) {
+          // Get the expiration time of the key
+          const expireKey = `${key}:expire`;
+          if (dataStore[currentDatabase].has(expireKey)) {
+            const timestamp = dataStore[currentDatabase].get(expireKey);
+            const ttl = Math.max(timestamp - Math.floor(Date.now() / 1000), 0);
+            connection.write(`:${ttl}\r\n`);
+          }
+          else {
+            connection.write(":-1\r\n");
+          }
+        }
+        else {
+          connection.write(":-2\r\n");
+        }
+      }
+      
+      else if (command[2] == "EXPIREAT") {
+        const key = command[4];
+        const timestamp = parseInt(command[6]);
+        if (dataStore[currentDatabase].has(key)) {
+          // Set the expiration time of the key
+          dataStore[currentDatabase].set(`${key}:expire`, timestamp);
+          connection.write(":1\r\n");
+        }
+        else {
+          connection.write(":0\r\n");
+        }
+      }
+      else if (command[2] == "PERSIST") {
+        const key = command[4];
+        if (dataStore[currentDatabase].has(`${key}:expire`)) {
+          dataStore[currentDatabase].delete(`${key}:expire`);
+          connection.write(":1\r\n");
+        }
+        else {
+          connection.write(":0\r\n");
+        }
+      }
+      
+      else if (command[2] == "HGET") {
+        const key = command[4];
+        const field = command[6];
+        if (dataStore[currentDatabase].has(key)) {
+          const value = dataStore[currentDatabase].get(key)[field];
+          if (value !== undefined) {
+            connection.write(`$${value.length}\r\n${value}\r\n`);
+          }
+          else {
+            connection.write("$-1\r\n");
+          }
+        }
+        else {
+          connection.write("$-1\r\n");
+        }
+      }
+
+      else if (command[2] == "HSET") {
+        const key = command[4];
+        const field = command[6];
+        const value = command[8];
+        if (!dataStore[currentDatabase].has(key)) {
+          dataStore[currentDatabase].set(key, {});
+        }
+        dataStore[currentDatabase].get(key)[field] = value;
+        connection.write(":1\r\n");
+      }
+
+      else if (command[2] == "HGETALL") {
+        const key = command[4];
+        if (dataStore[currentDatabase].has(key)) {
+          const obj = dataStore[currentDatabase].get(key);
+          let response = "*" + (Object.keys(obj).length * 2) + "\r\n";
+          for (const [field, value] of Object.entries(obj)) {
+            response += `$${field.length}\r\n${field}\r\n`;
+            response += `$${value.length}\r\n${value}\r\n`;
+          }
+          connection.write(response);
+        }
+        else {
+          connection.write("*0\r\n");
+        }
+      }
+      
+      // HSETNX, HINCRBY, HDEL, HEXISTS, HKEYS, HLEN, HSTRLEN, HVALS
+      else if (command[2] == "HSETNX") {
+        const key = command[4];
+        const field = command[6];
+        const value = command[8];
+        if (!dataStore[currentDatabase].has(key)) {
+          dataStore[currentDatabase].set(key, {});
+        }
+        const obj = dataStore[currentDatabase].get(key);
+        if (obj[field] === undefined) {
+          obj[field] = value;
+          connection.write(":1\r\n");
+        }
+        else {
+          connection.write(":0\r\n");
+        }
+      }
+
+      else if (command[2] == "HINCRBY") {
+        const key = command[4];
+        const field = command[6];
+        const increment = Number(command[8]);
+        if (!dataStore[currentDatabase].has(key)) {
+          dataStore[currentDatabase].set(key, {});
+        }
+        const obj = dataStore[currentDatabase].get(key);
+        if (obj[field] === undefined) {
+          obj[field] = "0";
+        }
+        obj[field] = String(Number(obj[field]) + increment);
+        connection.write(":" + obj[field].length + "\r\n" + obj[field] + "\r\n");
+      }
+
+      else if (command[2] == "HDEL") {
+        const key = command[4];
+        const fields = command.slice(6);
+        if (!dataStore[currentDatabase].has(key)) {
+          connection.write(":0\r\n");
+        }
+        else {
+          const obj = dataStore[currentDatabase].get(key);
+          let count = 0;
+          for (const field of fields) {
+            if (obj.hasOwnProperty(field)) {
+              delete obj[field];
+              count += 1;
+            }
+          }
+          if (Object.keys(obj).length === 0) {
+            dataStore[currentDatabase].delete(key);
+          }
+          connection.write(":" + count + "\r\n");
+        }
+      }
+
+      else if (command[2] == "HEXISTS") {
+        const key = command[4];
+        const field = command[6];
+        if (!dataStore[currentDatabase].has(key)) {
+          connection.write(":0\r\n");
+        }
+        else {
+          const obj = dataStore[currentDatabase].get(key);
+          if (obj.hasOwnProperty(field)) {
+            connection.write(":1\r\n");
+          }
+          else {
+            connection.write(":0\r\n");
+          }
+        }
+      }
+
+      else if (command[2] == "HKEYS") {
+        const key = command[4];
+        if (!dataStore[currentDatabase].has(key)) {
+          connection.write("*0\r\n");
+        }
+        else {
+          const obj = dataStore[currentDatabase].get(key);
+          const fields = Object.keys(obj);
+          let response = "*" + fields.length + "\r\n";
+          for (const field of fields) {
+            response += "$" + field.length + "\r\n" + field + "\r\n";
+          }
+          connection.write(response);
+        }
+      }
+
+      else if (command[2] == "HLEN") {
+        const key = command[4];
+        if (!dataStore[currentDatabase].has(key)) {
+          connection.write(":0\r\n");
+        }
+        else {
+          const obj = dataStore[currentDatabase].get(key);
+          const count = Object.keys(obj).length;
+          connection.write(":" + count + "\r\n");
+        }
+      }      
+
+      else if (command[2] == "HSTRLEN") {
+        const key = command[4];
+        const field = command[6];
+        if (!dataStore[currentDatabase].has(key)) {
+          connection.write(":0\r\n");
+        }
+        else {
+          const obj = dataStore[currentDatabase].get(key);
+          if (obj.hasOwnProperty(field)) {
+            const value = obj[field];
+            connection.write(":" + value.length + "\r\n");
+          }
+          else {
+            connection.write(":0\r\n");
+          }
+        }
+      }
+
+      else if (command[2] == "HVALS") {
+        const key = command[4];
+        if (!dataStore[currentDatabase].has(key)) {
+          connection.write("*0\r\n");
+        }
+        else {
+          const obj = dataStore[currentDatabase].get(key);
+          const values = Object.values(obj);
+          let response = "*" + values.length + "\r\n";
+          for (const value of values) {
+            response += "$" + value.length + "\r\n" + value + "\r\n";
+          }
+          connection.write(response);
+        }
+      }
+      
 }
 
 const stateChecker = (state) => {
