@@ -12,7 +12,7 @@ for (let i = 0; i < MAX_DATABASES; i++) {
 
 if(fs.existsSync(path.join(__dirname, "data.json"))){
     dataStore = JSON.parse(fs.readFileSync(path.join(__dirname, "data.json")));
-    console.log("Data loaded from file");
+    console.log("Data  Restored");
     dataStore = dataStore.map((item) => {
         return new Map(Object.entries(item));
       });
@@ -21,6 +21,7 @@ if(fs.existsSync(path.join(__dirname, "data.json"))){
 let currentDatabase = DEFAULT_DATABASE;
 
 const parseIncomingData = (data) => {
+    console.log(JSON.stringify(data.toString()));
     const lines = data.toString().split("\r\n");
     return lines;
 }
@@ -554,7 +555,7 @@ const server = net.createServer((connection) => {
 
     connection.on("data", (data) => {
         let command = parseIncomingData(data);
-        console.log(dataStore)
+        // console.log(dataStore)
         assignHandler(command, connection);
     })
 });
