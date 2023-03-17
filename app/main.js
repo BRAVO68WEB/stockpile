@@ -12,7 +12,6 @@ for (let i = 0; i < MAX_DATABASES; i++) {
 
 if(fs.existsSync(path.join(__dirname, "data.json"))){
     dataStore = JSON.parse(fs.readFileSync(path.join(__dirname, "data.json")));
-    console.log("Data  Restored");
     dataStore = dataStore.map((item) => {
         return new Map(Object.entries(item));
       });
@@ -21,7 +20,6 @@ if(fs.existsSync(path.join(__dirname, "data.json"))){
 let currentDatabase = DEFAULT_DATABASE;
 
 const parseIncomingData = (data) => {
-    console.log(JSON.stringify(data.toString()));
     const lines = data.toString().split("\r\n");
     return lines;
 }
@@ -31,13 +29,36 @@ const assignHandler = (command, connection) => {
     if(command[2] == "PING"){
         connection.write("+PONG\r\n");
     }
+
     else if(command[2] == "SET"){
         dataStore[currentDatabase].set(command[4], command[6]);
+        let expireTime = null;
+
+        for (let i = 8; i < command.length; i += 2) {
+          if (command[i].toUpperCase() === "PX") {
+            expireTime = Date.now() + parseInt(command[i + 2]);
+          } else if (command[i].toUpperCase() === "EX") {
+            expireTime = Date.now() + parseInt(command[i + 2]) * 1000;
+          }
+        }
+
+        if (expireTime) {
+          dataStore[currentDatabase].set(command[4] + "_expire", expireTime);
+        }
         connection.write("+OK\r\n");
     }
     else if(command[2] == "GET"){
-        if(dataStore[currentDatabase].get(command[4]))
-            connection.write("+" + dataStore[currentDatabase].get(command[4]) + "\r\n");
+        if(dataStore[currentDatabase].get(command[4] + "_expire") && dataStore[currentDatabase].get(command[4] + "_expire") < Date.now()){
+          connection.write("$-1\r\n");
+          dataStore[currentDatabase].delete(command[4]);
+          dataStore[currentDatabase].delete(command[4] + "_expire");
+        }
+        
+        else if(dataStore[currentDatabase].get(command[4]))
+          connection.write("+" + dataStore[currentDatabase].get(command[4]) + "\r\n");
+        
+        
+        
         else
             connection.write("$-1\r\n");
     }
@@ -140,7 +161,6 @@ const assignHandler = (command, connection) => {
 
     else if (command[2] == "MSET") {
         const keyValuePairs = command.slice(4);
-        console.log(keyValuePairs);
         for (let i = 0; i < keyValuePairs.length; i += 2) {
           dataStore[currentDatabase].set(keyValuePairs[i], keyValuePairs[i + 2]);
         }
@@ -153,13 +173,11 @@ const assignHandler = (command, connection) => {
     
         if (values.includes(null)) {
             connection.write("$-1\r\n");
-            console.log("Some keys not found");
         } else {
             const response = values.reduce((acc, value) => {
                 return `${acc}\r\n$${value.length}\r\n${value}`;
             }, `*${values.length}`);
             connection.write(response);
-            console.log(`MGET response: ${response}`);
         }
     }
 
@@ -555,7 +573,6 @@ const server = net.createServer((connection) => {
 
     connection.on("data", (data) => {
         let command = parseIncomingData(data);
-        // console.log(dataStore)
         assignHandler(command, connection);
     })
 });
