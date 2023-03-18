@@ -1,2 +1,5 @@
 dump.rdb
-app/data.json
+**/stockpile.dump
+testBox.js
+node_modules
+*.dat

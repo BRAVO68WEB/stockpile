@@ -115,5 +115,8 @@ echo "Test Redis HVALS command"
 redis-cli hmset person name John age 30
 redis-cli hvals person
 
+echo "Dump current DB State"
+redis-cli dump
+
 echo "Clean up by deleting all keys"
 redis-cli flushall
