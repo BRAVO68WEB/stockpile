@@ -10,4 +10,4 @@ services:
     ports:
       - "6379:6379"
     volumes:
-      - ./data.db:/usr/app/stockpile.dump
+      - ./data:/usr/app/db

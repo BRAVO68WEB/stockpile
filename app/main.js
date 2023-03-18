@@ -19,8 +19,8 @@ for (let i = 0; i < MAX_DATABASES; i++) {
     dataStore[i] = new Map();
 }
 
-if (fs.existsSync(path.join(__dirname, "../stockpile.dump"))) {
-    dataStore = fs.readFileSync(path.join(__dirname, "../stockpile.dump"));
+if (fs.existsSync(path.join(__dirname, "../db/stockpile.dump"))) {
+    dataStore = fs.readFileSync(path.join(__dirname, "../db/stockpile.dump"));
     dataStore = readBinaryData(dataStore);
 }
 
@@ -519,7 +519,7 @@ server.listen(6379, "127.0.0.1", () => {
 
 function saveDataToFile(data, filename) {
     const binaryData = createBinaryData(data);
-    fs.writeFileSync("stockpile.dump", binaryData);
+    fs.writeFileSync("db/stockpile.dump", binaryData);
 }
 
 process.on("SIGINT", () => {
