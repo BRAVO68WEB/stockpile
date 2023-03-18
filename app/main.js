@@ -33,7 +33,6 @@ const parseIncomingData = (data) => {
 
 const assignHandler = (command, connection) => {
     command[2] = command[2].toUpperCase();
-
     if (
         authConfig.enabled &&
         !authConfig.isAuthenticated &&
@@ -483,8 +482,14 @@ const assignHandler = (command, connection) => {
     } else if (command[2] == "DUMP") {
         saveDataToFile(dataStore);
         connection.write("+OK Saving Current State\r\n");
+    } else if (command[0].includes("health")) {
+        connection.write("OK !!\r\n")
+        connection.end()
+    } else if (command[0].includes("GET")) {
+        connection.write("Stockpile is Running !!\r\n")
+        connection.end()
     } else {
-        connection.write("-ERR unknown command '" + command[2] + "'\r\n'");
+        connection.write("-ERR unknown command " + command[2] + "\r\n");
     }
 };
 
@@ -496,6 +501,15 @@ const server = net.createServer((connection) => {
         let command = parseIncomingData(data);
         assignHandler(command, connection);
     });
+
+    connection.on("end", (something) => {
+        console.log("Client disconnected");
+    })
+
+    connection.on("error", (err) => {
+        console.log("Error in connection");
+        console.log(err);
+    })
 });
 
 server.listen(6379, "127.0.0.1", () => {
