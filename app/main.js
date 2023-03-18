@@ -512,7 +512,7 @@ const server = net.createServer((connection) => {
     })
 });
 
-server.listen(6379, "127.0.0.1", () => {
+server.listen(6379, "0.0.0.0", () => {
     console.log("Starting server");
     console.log("Stockpile server listening on port 6379");
 });
