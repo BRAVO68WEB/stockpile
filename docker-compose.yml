@@ -1,0 +1,13 @@
+version: '3.7'
+
+services:
+  stockpile:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: stockpile
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./data.db:/usr/app/stockpile.dump
