@@ -1,5 +1,5 @@
 # Welcome to stockpile 👋
-[![Version](https://img.shields.io/npm/v/stockpile.svg)](https://www.npmjs.com/package/stockpile)
+[![Version](https://img.shields.io/npm/v/@bravo68web/stockpile.svg)](https://www.npmjs.com/package/stockpile)
 [![Documentation](https://img.shields.io/badge/documentation-yes-brightgreen.svg)](https://github.com/BRAVO68WEB/stockpile#readme)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/BRAVO68WEB/stockpile/graphs/commit-activity)
 [![License: MIT](https://img.shields.io/github/license/BRAVO68WEB/stockpile)](https://github.com/BRAVO68WEB/stockpile/blob/master/LICENSE)

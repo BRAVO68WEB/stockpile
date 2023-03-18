@@ -1,8 +1,11 @@
 {
   "name": "@bravo68web/stockpile",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A Tiny Redis Server ...",
   "main": "app/main.js",
+  "bin": {
+    "stockpile": "app/main.js"
+  },
   "scripts": {
     "dev": "nodemon app/main.js",
     "test": "./test_local.sh"
