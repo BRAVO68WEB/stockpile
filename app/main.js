@@ -7,6 +7,12 @@ const path = require("path");
 const MAX_DATABASES = 16;
 const DEFAULT_DATABASE = 0;
 
+const authConfig = {
+  enabled: false,
+  isAuthenticated: false,
+  password: ""
+}
+
 let dataStore = new Array(MAX_DATABASES);
 for (let i = 0; i < MAX_DATABASES; i++) {
 	dataStore[i] = new Map();
@@ -28,7 +34,31 @@ const parseIncomingData = (data) => {
 
 const assignHandler = (command, connection) => {
 	command[2] = command[2].toUpperCase();
-	if (command[2] == "PING") {
+
+  if (authConfig.enabled && !authConfig.isAuthenticated && command[2] !== "AUTH") {
+    connection.write("-ERR NOAUTH Authentication required.\r\n");
+    return;
+  }
+
+  if(command[2] == "AUTH") {
+    if(authConfig.enabled) {
+      if(authConfig.isAuthenticated){
+        connection.write("-ERR Already authenticated\r\n");
+      }
+      else if(command[4] == authConfig.password) {
+        authConfig.isAuthenticated = true;
+        connection.write("+OK Auth Successfull\r\n");
+      }
+      else if(command[4] != authConfig.password) {
+        connection.write("-ERR Invalid Password\r\n");
+      }
+    }
+    else {
+      connection.write("-ERR Authentication is not enabled\r\n");
+    }
+  }
+
+	else if (command[2] == "PING") {
 		connection.write("+PONG\r\n");
 	} else if (command[2] == "SET") {
 		dataStore[currentDatabase].set(command[4], command[6]);
@@ -150,12 +180,6 @@ const assignHandler = (command, connection) => {
 			}, `*${values.length}`);
 			connection.write(response);
 		}
-	}
-
-	// TODO: Monitor command is not working
-	else if (command[2] == "MONITOR") {
-		console.log("Monitoring started.");
-		connection.write("+OK\r\n");
 	} else if (command[2] == "FLUSHDB") {
 		dataStore[currentDatabase].clear();
 		connection.write("+OK\r\n");
@@ -473,7 +497,10 @@ const server = net.createServer((connection) => {
 	})
 });
 
-server.listen(6379, "127.0.0.1");
+server.listen(6379, "127.0.0.1", () => {
+  console.log("Starting server");
+  console.log("Stockpile server listening on port 6379");
+});
 
 function saveDataToFile(data, filename) {
 	let newData = []
