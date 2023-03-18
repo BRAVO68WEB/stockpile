@@ -74,7 +74,7 @@ echo "Test Redis EXPIRE, TTL, and EXPIREAT commands"
 redis-cli set name John
 redis-cli expire name 10
 redis-cli ttl name
-redis-cli expireat name "$(date -v +10S +%s)"
+redis-cli expireat name "$(date +%s) + 10"
 redis-cli persist name
 
 echo "Test Redis HGET, HSET, HGETALL, and HSETNX commands"

@@ -1,0 +1,33 @@
+{
+  "name": "@bravo68web/stockpile",
+  "version": "0.1.0",
+  "description": "A Tiny Redis Server ...",
+  "main": "app/main.js",
+  "scripts": {
+    "dev": "nodemon app/main.js",
+    "test": "./test_local.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BRAVO68WEB/stockpile.git"
+  },
+  "keywords": [
+    "redis",
+    "node-cache",
+    "clone",
+    "tiny",
+    "self",
+    "server",
+    "service"
+  ],
+  "author": {
+    "email": "hi@b68.dev",
+    "name": "Jyotirmoy <BRAVO68WEB> Bandyopadhayaya",
+    "url": "https://itsmebravo.dev"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/BRAVO68WEB/stockpile/issues"
+  },
+  "homepage": "https://github.com/BRAVO68WEB/stockpile#readme"
+}
