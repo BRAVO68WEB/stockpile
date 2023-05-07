@@ -13,6 +13,7 @@ jobs:
           node-version: 16
       - run: npm install -g yarn
       - run: yarn
+      - run: sudo apt install redis-tools
       - run: chmod +x spawn_redis_server.sh test_local.sh
       - run: ./spawn_redis_server.sh &
       - run: ./test_local.sh
