@@ -1,0 +1,7 @@
+dump.rdb
+**/stockpile.dump
+testBox.js
+node_modules
+*.dat
+config.json
+stockpile.json

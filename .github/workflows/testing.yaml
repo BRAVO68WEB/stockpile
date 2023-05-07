@@ -1,0 +1,19 @@
+name: Build Checks
+
+on:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 16
+      - run: npm install -g yarn
+      - run: yarn
+      - run: sudo apt install redis-tools
+      - run: chmod +x spawn_redis_server.sh test_local.sh
+      - run: ./spawn_redis_server.sh &
+      - run: ./test_local.sh
