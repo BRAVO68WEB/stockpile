@@ -8,4 +8,6 @@ RUN yarn
 
 COPY . .
 
-CMD ["node", "app/main.js"]
+EXPOSE 6379
+
+ENTRYPOINT ["node"]
