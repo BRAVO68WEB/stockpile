@@ -1,8 +1,7 @@
-#!/usr/bin/env node
-
 const net = require("net");
 const fs = require("fs");
 const path = require("path");
+const pkg = require("../package.json");
 const { createBinaryData, readBinaryData } = require("./buffer");
 
 module.exports = (config) => {
@@ -34,6 +33,8 @@ module.exports = (config) => {
 
     const assignHandler = (command, connection) => {
         command[2] = command[2].toUpperCase();
+        console.log(command);
+        console.log(dataStore[currentDatabase]);
         if (
             authConfig.enabled &&
             !authConfig.isAuthenticated &&
@@ -271,12 +272,10 @@ module.exports = (config) => {
             const key = command[4];
             const seconds = parseInt(command[6]);
             if (dataStore[currentDatabase].has(key)) {
-                // Set the expiration time of the key
                 const timestamp = Math.floor(Date.now() / 1000) + seconds;
                 dataStore[currentDatabase].set(`${key}:expire`, timestamp);
                 connection.write(":1\r\n");
 
-                // Schedule the key for deletion when the expiration time has elapsed
                 setTimeout(() => {
                     if (dataStore[currentDatabase].has(key)) {
                         dataStore[currentDatabase].delete(key);
@@ -357,10 +356,7 @@ module.exports = (config) => {
             } else {
                 connection.write("*0\r\n");
             }
-        }
-
-        // HSETNX, HINCRBY, HDEL, HEXISTS, HKEYS, HLEN, HSTRLEN, HVALS
-        else if (command[2] == "HSETNX") {
+        } else if (command[2] == "HSETNX") {
             const key = command[4];
             const field = command[6];
             const value = command[8];
@@ -492,9 +488,8 @@ module.exports = (config) => {
         } else if (command[0].includes("health")) {
             connection.write("OK !!\r\n");
             connection.end();
-        } else if (command[0].includes("GET")) {
-            connection.write("Stockpile is Running !!\r\n");
-            connection.end();
+        } else if (command[2].includes("INFO")) {
+            connection.write(`+# Stockpile Server ${pkg.version}\r\n`);
         } else {
             connection.write("-ERR unknown command " + command[2] + "\r\n");
         }
@@ -524,7 +519,7 @@ module.exports = (config) => {
         console.log("Stockpile server listening on port 6379");
     });
 
-    function saveDataToFile(data, filename) {
+    function saveDataToFile(data) {
         const binaryData = createBinaryData(data);
         fs.writeFileSync(config.dumppath, binaryData);
     }
