@@ -19,7 +19,6 @@ if (commandName === "help") {
     console.log("");
     console.log("Github : ", "https://github.com/BRAVO68WEB/stockpile");
     console.log("Author : ", "https://github.com/BRAVO68WEB/");
-    process.exit(0);
 } else if (commandName === "init") {
     try {
         console.log("Initializing new Stockpile config file");
@@ -65,7 +64,6 @@ if (commandName === "help") {
 
         fs.writeFileSync(config.configpath, JSON.stringify(config));
         console.log(`Config file created at ${config.configpath}`);
-        process.exit(0);
     } catch (err) {
         console.log(err);
         process.exit(1);
