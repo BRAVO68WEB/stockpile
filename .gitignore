@@ -5,3 +5,4 @@ node_modules
 *.dat
 config.json
 stockpile.json
+dist/

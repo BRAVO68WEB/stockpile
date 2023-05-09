@@ -6,5 +6,5 @@
 #
 # DON'T EDIT THIS!
 currentLoc=$(pwd)
-node app/bootstrap.js init --name "stockpile-db" --port 6379 --configpath $currentLoc/stockpile.json --dumppath $currentLoc/stockpile.db
-exec node app/bootstrap.js start --configpath $currentLoc/stockpile.json
+yarn app init --name "stockpile-db" --port 6379 --configpath $currentLoc/stockpile.json --dumppath $currentLoc/db/stockpile.db
+exec yarn app start --configpath $currentLoc/stockpile.json
