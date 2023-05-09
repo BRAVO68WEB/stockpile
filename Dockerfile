@@ -3,11 +3,11 @@ FROM node:alpine
 WORKDIR /usr/app
 
 COPY package.json .
+COPY . .
 
 RUN yarn
-
-COPY . .
+RUN yarn build
 
 EXPOSE 6379
 
-ENTRYPOINT ["node"]
+ENTRYPOINT ["yarn app"]

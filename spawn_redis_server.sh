@@ -7,4 +7,4 @@
 # DON'T EDIT THIS!
 currentLoc=$(pwd)
 yarn app init --name "stockpile-db" --port 6379 --configpath $currentLoc/stockpile.json --dumppath $currentLoc/db/stockpile.db
-exec yarn app start --configpath $currentLoc/stockpile.json
+yarn app start --configpath $currentLoc/stockpile.json
