@@ -1,0 +1,16 @@
+name: Testing workflow
+on:
+  - push
+
+jobs:
+  lint:
+    name: check and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 16
+      - run: npm install -g yarn
+      - run: yarn
+      - run: yarn build
